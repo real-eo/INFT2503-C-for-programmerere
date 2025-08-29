@@ -1,0 +1,4 @@
+/c/Users/reale/Studie/INFT2503 C++ for programmerere/2025 HØST/Øving 1 - Grunnleggende C++/build/CMakeFiles/a.dir
+/c/Users/reale/Studie/INFT2503 C++ for programmerere/2025 HØST/Øving 1 - Grunnleggende C++/build/CMakeFiles/b.dir
+/c/Users/reale/Studie/INFT2503 C++ for programmerere/2025 HØST/Øving 1 - Grunnleggende C++/build/CMakeFiles/edit_cache.dir
+/c/Users/reale/Studie/INFT2503 C++ for programmerere/2025 HØST/Øving 1 - Grunnleggende C++/build/CMakeFiles/rebuild_cache.dir

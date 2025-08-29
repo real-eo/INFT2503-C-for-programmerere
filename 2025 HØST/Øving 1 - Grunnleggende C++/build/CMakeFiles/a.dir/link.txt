@@ -1,0 +1,1 @@
+/mingw64/bin/g++.exe CMakeFiles/a.dir/a.cpp.obj -o a 

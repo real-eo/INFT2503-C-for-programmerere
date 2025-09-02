@@ -25,11 +25,38 @@ include_directories(${BULLET_INCLUDE_DIRS})
 
 find_package(Threads REQUIRED)
 
-include_directories(imgui imgui-sfml)
+include_directories(imgui imgui-sfml src)
 
-add_executable(oppgave main.cpp glut_shapes.c imgui/imgui.cpp imgui/imgui_widgets.cpp imgui/imgui_draw.cpp imgui/imgui_tables.cpp imgui-sfml/imgui-SFML.cpp)
+# Game objects library (also compiles the GLUT solid shapes C source)
+add_library(game_objects
+  src/game_objects/GameObjects.cpp
+  glut_shapes.c
+)
+target_link_libraries(game_objects PUBLIC ${OPENGL_LIBRARIES} ${BULLET_LIBRARIES})
+target_include_directories(game_objects PUBLIC src)
 
-target_link_libraries(oppgave ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(oppgave SFML::System SFML::Window SFML::Graphics)
-target_link_libraries(oppgave ${OPENGL_LIBRARIES})
-target_link_libraries(oppgave ${BULLET_LIBRARIES})
+# World library depends on game_objects
+add_library(world_lib
+  src/world/World.cpp
+)
+target_link_libraries(world_lib PUBLIC game_objects ${BULLET_LIBRARIES})
+target_include_directories(world_lib PUBLIC src)
+
+# Main executable (application stays in main.cpp)
+add_executable(oppgave
+  main.cpp
+  imgui/imgui.cpp
+  imgui/imgui_widgets.cpp
+  imgui/imgui_draw.cpp
+  imgui/imgui_tables.cpp
+  imgui-sfml/imgui-SFML.cpp
+)
+
+target_link_libraries(oppgave
+  ${CMAKE_THREAD_LIBS_INIT}
+  SFML::System SFML::Window SFML::Graphics
+  ${OPENGL_LIBRARIES}
+  ${BULLET_LIBRARIES}
+  world_lib
+  game_objects
+)

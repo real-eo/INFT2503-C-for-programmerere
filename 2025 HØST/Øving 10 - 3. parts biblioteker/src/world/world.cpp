@@ -1,4 +1,6 @@
-#include "world/World.hpp"
+#include "src/world/world.hpp"
+#include "src/gameObjects/gameObjects.hpp"
+
 
 World::World()
 : dispatcher(&collision_configuration),

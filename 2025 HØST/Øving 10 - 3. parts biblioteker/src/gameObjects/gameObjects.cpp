@@ -1,14 +1,21 @@
-#include "game_objects/GameObjects.hpp"
+#include "src/gameObjects/gameObjects.hpp"
 
-extern "C" {
-// Implementation is in glut_shapes.c
-void glutSolidCube(GLdouble size);
-}
+#include <SFML/OpenGL.hpp>
+#ifdef __APPLE__
+#include <OpenGL/glu.h>
+#else
+#include <GL/glu.h>
+#endif
 
 // Small fix due to M_PI being omitted when compiling using strict standard flags on Windows MinGW and Windows MSYS2
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
+extern "C" {
+    // Implementation is in glut_shapes.c
+    void glutSolidCube(GLdouble size);
+}
 
 // ---------- Ground ----------
 Ground::Ground()

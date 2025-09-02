@@ -5,7 +5,10 @@
 
 #include <btBulletDynamicsCommon.h>
 
-#include "game_objects/GameObjects.hpp"
+
+// Forward declaration
+class GameObject;
+
 
 class World {
 private:

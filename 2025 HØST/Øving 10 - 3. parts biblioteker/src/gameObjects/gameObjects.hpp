@@ -5,6 +5,7 @@
 
 #include <btBulletDynamicsCommon.h>
 
+
 class GameObject {
 private:
     btTransform origin;
@@ -35,6 +36,7 @@ public:
     }
 };
 
+
 // Ground inherits from GameObject
 class Ground : public GameObject {
 private:
@@ -44,6 +46,7 @@ public:
     void draw() const override;
 };
 
+
 // Sphere inherits from GameObject
 class Sphere : public GameObject {
 private:
@@ -52,6 +55,7 @@ public:
     Sphere();
     void draw() const override;
 };
+
 
 // Cube inherits from GameObject
 class Cube : public GameObject {

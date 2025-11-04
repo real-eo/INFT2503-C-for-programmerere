@@ -1,4 +1,4 @@
-#include "src/gameObjects/gameObjects.hpp"
+#include "gameObjects/gameObjects.hpp"
 
 #include <SFML/OpenGL.hpp>
 #ifdef __APPLE__

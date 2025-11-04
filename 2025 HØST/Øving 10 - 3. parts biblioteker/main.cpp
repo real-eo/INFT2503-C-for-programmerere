@@ -26,10 +26,10 @@
 #include "imgui.h"
 
 // Source
-// #include "src/gameObjects/gameObjects.hpp"                                           // Not needed here
-#include "src/world/world.hpp"
-#include "src/rendering/world.hpp"
-#include "src/rendering/gui.hpp"
+// #include "gameObjects/gameObjects.hpp"                                               // Not needed in this cpp file
+#include "world/world.hpp"
+#include "rendering/world.hpp"
+#include "rendering/gui.hpp"
 
 // main.cpp
 #include <iostream>
@@ -37,8 +37,8 @@
 
 class Application {
     sf::RenderWindow window;
-    World world;
 
+    World world;
     Renderer renderer;
 
 public:

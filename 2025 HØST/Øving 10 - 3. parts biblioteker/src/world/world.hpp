@@ -1,5 +1,7 @@
 #pragma once
 
+#include "gameObjects/gameObjects.hpp"
+
 #include <vector>
 #include <functional>
 
@@ -7,9 +9,9 @@
 
 
 // Forward declaration
-class GameObject;
+// class GameObject;
 
-
+// Class for the physics world. Rendering is handled separately by Renderer class.
 class World {
 private:
     btDefaultCollisionConfiguration collision_configuration;

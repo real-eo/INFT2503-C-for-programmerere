@@ -1,6 +1,6 @@
-#include "src/rendering/world.hpp"
-#include "src/world/world.hpp"
-#include "src/gameObjects/gameObjects.hpp"
+#include "rendering/world.hpp"
+#include "world/world.hpp"
+// #include "gameObjects/gameObjects.hpp"                                       # Included in world/world.hpp 
 
 // Open GL
 #include <SFML/OpenGL.hpp>

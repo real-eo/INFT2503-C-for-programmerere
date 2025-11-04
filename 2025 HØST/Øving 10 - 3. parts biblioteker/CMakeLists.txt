@@ -27,20 +27,33 @@ find_package(Threads REQUIRED)
 
 include_directories(imgui imgui-sfml src)
 
+
 # Game objects library (also compiles the GLUT solid shapes C source)
-add_library(game_objects
-  src/game_objects/GameObjects.cpp
+add_library(gameObjects_lib
+  src/gameObjects/gameObjects.cpp
   glut_shapes.c
 )
-target_link_libraries(game_objects PUBLIC ${OPENGL_LIBRARIES} ${BULLET_LIBRARIES})
-target_include_directories(game_objects PUBLIC src)
+target_link_libraries(gameObjects_lib PUBLIC ${OPENGL_LIBRARIES} ${BULLET_LIBRARIES})
+target_include_directories(gameObjects_lib PUBLIC src)
 
-# World library depends on game_objects
+
+# World library depends on gameObjects
 add_library(world_lib
-  src/world/World.cpp
+  src/world/world.cpp
 )
-target_link_libraries(world_lib PUBLIC game_objects ${BULLET_LIBRARIES})
+target_link_libraries(world_lib PUBLIC gameObjects_lib ${BULLET_LIBRARIES})
 target_include_directories(world_lib PUBLIC src)
+
+
+# Rendering library depends on both world_lib
+add_library(rendering_lib
+  src/rendering/world.cpp
+  src/rendering/gui.cpp
+)
+
+target_link_libraries(rendering_lib PUBLIC world_lib ${BULLET_LIBRARIES})
+target_include_directories(rendering_lib PUBLIC src)
+
 
 # Main executable (application stays in main.cpp)
 add_executable(oppgave
@@ -57,6 +70,7 @@ target_link_libraries(oppgave
   SFML::System SFML::Window SFML::Graphics
   ${OPENGL_LIBRARIES}
   ${BULLET_LIBRARIES}
+  rendering_lib
   world_lib
-  game_objects
+  gameObjects_lib
 )

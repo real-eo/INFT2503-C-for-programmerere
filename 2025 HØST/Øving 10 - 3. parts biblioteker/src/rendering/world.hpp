@@ -15,6 +15,7 @@ class World;
 class Renderer {
 private: 
     World& world;
+
 public:
     Renderer(World& world);
     static void setup_opengl();

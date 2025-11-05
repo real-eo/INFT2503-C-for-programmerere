@@ -26,7 +26,7 @@ class Application {
 
 public:
     Application() 
-    : window(sf::VideoMode({800, 600}), "SFML Example"),
+    : window(sf::VideoMode({800, 600}), "SFML Example", sf::Style::Titlebar | sf::Style::Close),
       world(),
       renderer(world),
       gui(world, window) {                                                              // <-- Gui constructed and ImGui::SFML::Init() called here

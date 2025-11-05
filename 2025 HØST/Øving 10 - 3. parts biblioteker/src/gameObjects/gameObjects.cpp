@@ -20,9 +20,7 @@ extern "C" {
 }
 
 
-
 // * -------- GameObject --------
-
 std::array<float*, 4U> GameObject::getPositionPointers() {
     // ? Steps to get the non-const pointers to the individual btScalars within the btVector3 m_origin member of btTransform:
     /* // * 1)

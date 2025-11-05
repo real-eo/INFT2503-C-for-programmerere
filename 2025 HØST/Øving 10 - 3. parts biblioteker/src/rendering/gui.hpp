@@ -18,6 +18,9 @@ private:
     World& world;
     sf::RenderWindow& window;
 
+    // * Functions
+    void positionGui();
+
 public:
     // * Constructors & Deconstructor
     Gui(World& world, sf::RenderWindow& window);
@@ -41,3 +44,5 @@ public:
     // * Functions
     void handle();
 };
+
+

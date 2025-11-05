@@ -26,7 +26,7 @@ class Application {
 
 public:
     Application() 
-    : window(sf::VideoMode({800, 600}), "SFML Example", sf::Style::Titlebar | sf::Style::Close),
+    : window(sf::VideoMode({1000, 750}), "SFML Example", sf::Style::Titlebar | sf::Style::Close),
       world(),
       renderer(world),
       gui(world, window) {                                                              // <-- Gui constructed and ImGui::SFML::Init() called here
@@ -39,9 +39,9 @@ public:
 
     void start() {
         glm::vec3 camera(0.0, 1.0, 6.0);
-        sf::Clock delta_clock;
+        sf::Clock deltaClock;
 
-        auto last_time = std::chrono::system_clock::now();
+        auto lastTime = std::chrono::system_clock::now();
         bool running = true;
 
         while (running) {
@@ -64,13 +64,13 @@ public:
             }
             
             // * Update GUI
-            gui.update(delta_clock.restart());
+            gui.update(deltaClock.restart());
             
             // * Handling input
             gui.handle();
 
             // * Render the world
-            renderer.render_frame(camera, last_time);
+            renderer.render_frame(camera, lastTime);
 
             // * Render the GUI
             gui.render();

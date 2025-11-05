@@ -1,9 +1,5 @@
 #pragma once
 
-// #include <SFML/Graphics.hpp>
-// #include <SFML/OpenGL.hpp>
-// #include <SFML/System.hpp>
-
 #include <glm/glm.hpp>
 #include <chrono>
 

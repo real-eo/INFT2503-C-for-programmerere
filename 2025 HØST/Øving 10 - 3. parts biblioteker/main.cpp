@@ -1,21 +1,3 @@
-
-
-
-
-
-
-// #include <chrono>                                   
-
-
-
-// #include <glm/glm.hpp>
-
-// #include <btBulletDynamicsCommon.h>
-
-
-
-
-
 // SFML
 // #include <SFML/Graphics.hpp>                                                         // Included in "rendering/gui.hpp"
 #include <SFML/OpenGL.hpp>
@@ -64,11 +46,12 @@ public:
         bool running = true;
 
         while (running) {
-            // Handle events
+            // * Handle events
             while (auto event = window.pollEvent()) {
-                // ImGui::SFML::ProcessEvent(window, *event);
+                // Handle GUI events
                 gui.process(*event);
-
+                
+                // Handle global events
                 if (auto keyPressed = event->getIf<sf::Event::KeyPressed>()) {
                     if (keyPressed->scancode == sf::Keyboard::Scancode::Escape) {
                         window.close();
@@ -80,42 +63,20 @@ public:
                     running = false;
                 }
             }
-
-            // ImGui::SFML::Update(window, delta_clock.restart());
+            
+            // * Update GUI
             gui.update(delta_clock.restart());
-
-            // ImGui::Begin("ImGui");
-
-            // if (ImGui::Button("Restart game")) {
-            //     world.reset();
-            // }
-
-            // if (ImGui::Button("Drop ball")) {
-            //     world.dropBall();
-            // }
-
-            // float horizontal_position = 0.0f;
-            // if (ImGui::SliderFloat("Horizontal ball position", &horizontal_position, 0.0, 10.0)) {
-            //     // TODO: Implementation needed
-            //     // world.setBallPosition(horizontal_position);
-            // }
-
-            // float vertical_position = 0.0f;
-            // if (ImGui::VSliderFloat("Vertical ball position", {20, 100}, &vertical_position, 0.0, 10.0)) {
-            //     // TODO: Implementation needed
-            //     // world.setBallPosition(vertical_position);
-            // }
-
-            // ImGui::End();
+            
+            // * Handling input
             gui.handle();
 
-            // World Rendering
+            // * Render the world
             renderer.render_frame(camera, last_time);
 
-            // ImGUI
+            // * Render the GUI
             gui.render();
 
-            // Swap buffer (show result)
+            // * Swap buffer (show result)
             window.display();
 
 

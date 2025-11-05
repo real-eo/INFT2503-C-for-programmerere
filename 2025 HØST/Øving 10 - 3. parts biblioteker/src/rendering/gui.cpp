@@ -16,6 +16,7 @@ Gui::~Gui() {
 void Gui::handle() {
     ImGui::Begin("ImGui");
 
+    // * Control buttons
     if (ImGui::Button("Restart game")) {
         world.reset();
     }
@@ -24,16 +25,28 @@ void Gui::handle() {
         world.dropBall();
     }
 
-    float horizontal_position = 0.0f;
-    if (ImGui::SliderFloat("Horizontal ball position", &horizontal_position, 0.0, 10.0)) {
-        // TODO: Implementation needed
-        // world.setBallPosition(horizontal_position);
+    // * Position sliders
+    std::array<float*, 4U> position_ptr = world.falling_sphere.getPositionPointers();
+
+    // Horizontal position slider
+    btScalar* horizontalPosition = position_ptr[0];
+    if (ImGui::SliderFloat("Horizontal ball position", horizontalPosition, -4.25, 2.5)) {
+        world.falling_sphere.updatePosition();
+    }
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {                                 // Reset slider value on right-click
+        *horizontalPosition = 0.0f;
+        world.falling_sphere.updatePosition();
     }
 
-    float vertical_position = 0.0f;
-    if (ImGui::VSliderFloat("Vertical ball position", {20, 100}, &vertical_position, 0.0, 10.0)) {
-        // TODO: Implementation needed
-        // world.setBallPosition(vertical_position);
+    // Vertical position slider
+    btScalar* verticalPosition = position_ptr[1];
+    // // if (ImGui::VSliderFloat("Vertical ball position", {20, 100}, verticalPosition, 0.0, 4.0)) {
+    if (ImGui::SliderFloat("Vertical ball position", verticalPosition, -3.0, 0.5)) {
+        world.falling_sphere.updatePosition();
+    }
+    if (ImGui::IsItemClicked(ImGuiMouseButton_Right)) {                                 // Reset slider value on right-click
+        *verticalPosition = 0.0f;
+        world.falling_sphere.updatePosition();
     }
 
     ImGui::End();

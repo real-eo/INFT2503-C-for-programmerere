@@ -37,7 +37,7 @@ target_link_libraries(gameObjects_lib PUBLIC ${OPENGL_LIBRARIES} ${BULLET_LIBRAR
 target_include_directories(gameObjects_lib PUBLIC src)
 
 
-# World library depends on gameObjects
+# World library depends on gameObjects_lib
 add_library(world_lib
   src/world/world.cpp
 )
@@ -45,7 +45,7 @@ target_link_libraries(world_lib PUBLIC gameObjects_lib ${BULLET_LIBRARIES})
 target_include_directories(world_lib PUBLIC src)
 
 
-# Rendering library depends on both world_lib
+# Rendering library depends on world_lib
 add_library(rendering_lib
   src/rendering/world.cpp
   src/rendering/gui.cpp
@@ -55,7 +55,7 @@ target_link_libraries(rendering_lib PUBLIC world_lib ${BULLET_LIBRARIES})
 target_include_directories(rendering_lib PUBLIC src)
 
 
-# Main executable (application stays in main.cpp)
+# Main executable
 add_executable(oppgave
   main.cpp
   imgui/imgui.cpp

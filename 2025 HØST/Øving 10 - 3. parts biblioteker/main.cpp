@@ -29,7 +29,7 @@ public:
     : window(sf::VideoMode({800, 600}), "SFML Example"),
       world(),
       renderer(world),
-      gui(world, window) {                                                              // <-- Gui constructed and ImGui::SFML::Init called here
+      gui(world, window) {                                                              // <-- Gui constructed and ImGui::SFML::Init() called here
         window.setFramerateLimit(144);
         window.setVerticalSyncEnabled(true);
 
@@ -39,7 +39,6 @@ public:
 
     void start() {
         glm::vec3 camera(0.0, 1.0, 6.0);
-
         sf::Clock delta_clock;
 
         auto last_time = std::chrono::system_clock::now();
@@ -78,13 +77,11 @@ public:
 
             // * Swap buffer (show result)
             window.display();
-
-
         }
+
         // ImGui::SFML::Shutdown();                                                     // Handled in Gui::~Gui(); due to RAII
     }
 };
-
 
 
 int main() {

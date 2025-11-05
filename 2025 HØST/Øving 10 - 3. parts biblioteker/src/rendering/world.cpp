@@ -29,12 +29,16 @@ void Renderer::setup_opengl() {
     // Lighting
     glEnable(GL_LIGHTING);
     glEnable(GL_LIGHT0);
+
     GLfloat light_position[] = {-3.0, 4.0, 0.0, 1.0};
     GLfloat spot_direction[] = {1.0, -1.0, -0.5};
+
     glLightfv(GL_LIGHT0, GL_POSITION, light_position);
     glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, 45.0);
+    
     glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, spot_direction);
     glLightf(GL_LIGHT0, GL_SPOT_EXPONENT, 2.0);
+
     glEnable(GL_COLOR_MATERIAL);
 
     // Setup projection matrix

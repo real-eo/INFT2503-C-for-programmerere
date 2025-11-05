@@ -19,11 +19,11 @@ private:
     sf::RenderWindow& window;
 
 public:
-    // Constructors & Deconstructor
+    // * Constructors & Deconstructor
     Gui(World& world, sf::RenderWindow& window);
     ~Gui();
 
-    // Inlines
+    // * Inlines
     inline void process(const sf::Event& event) {   
         ImGui::SFML::ProcessEvent(window, event); 
     }
@@ -38,7 +38,6 @@ public:
         window.popGLStates();
     }
 
-    // Functions
+    // * Functions
     void handle();
-
 };

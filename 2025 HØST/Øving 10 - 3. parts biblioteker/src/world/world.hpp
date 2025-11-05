@@ -29,10 +29,12 @@ public:
     std::vector<GameObject*> entityList;
 
     World();
-
-    void reset();
-    void dropBall(float x, float y, float z);                                           // TODO: Update this function to only reposition the ball
-    void dropBall();                                                                    
     
-    std::function<void()> draw;
+    inline void dropBall() {
+        // Unfreeze the world
+        unfreeze();
+    }                                                                  
+    
+    void reset();
+    std::function<void()> draw;                                                         // ? Defined by Renderer::Renderer() in "renderer/world.cpp"
 };

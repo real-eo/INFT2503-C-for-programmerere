@@ -7,10 +7,12 @@
 #include <GL/glu.h>
 #endif
 
+
 // Small fix due to M_PI being omitted when compiling using strict standard flags on Windows MinGW and Windows MSYS2
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
+
 
 extern "C" {
     // Implementation is in glut_shapes.c
@@ -20,6 +22,49 @@ extern "C" {
 
 
 // * -------- GameObject --------
+
+std::array<float*, 4U> GameObject::getPositionPointers() {
+    // ? Steps to get the non-const pointers to the individual btScalars within the btVector3 m_origin member of btTransform:
+    /* // * 1)
+    btTransform (class) {
+        ///Storage for the rotation
+        btMatrix3x3 m_basis;                            // ! Private by default since btTransform is a class; - i.e. inaccessible
+        
+        ///Storage for the translation
+        btVector3 m_origin;                             // ! Private by default since btTransform is a class; - i.e. inaccessible
+
+    public:
+        btVector3& getOrigin() { return m_origin; }     // | Public non-const reference getter
+    }
+    */
+    
+    /* // * 2)
+    btVector3 (class) { 
+    public:
+        btScalar m_floats[4];                           // | Public member array of 4 btScalars, accessible directly via the class instance
+    }
+    */
+
+    /* // * 3)
+    typedef float btScalar                              // | btScalar is just a typedef of float
+    */
+
+
+    // Get the non-const reference to the m_origin member from the btTransform class 
+    btVector3& m_originRef = position.getOrigin();
+
+    // Return pointers to the four btScalars within the btVector3's m_floats array. This must be 
+    // done by us, as the only getters within the class are either const, or passed by value.
+    // When returning, treat values as floats so that they get correctly interpreted by ImGui.
+    // This can be done safely as btScalar is just a typedef of float.
+    return {
+        &m_originRef.m_floats[0],
+        &m_originRef.m_floats[1],
+        &m_originRef.m_floats[2],
+        &m_originRef.m_floats[3]
+    };
+}
+
 void GameObject::reset() {
     // Reset velocities
     body->setLinearVelocity(btVector3(0, 0, 0));
@@ -29,21 +74,11 @@ void GameObject::reset() {
     body->clearForces();
 
     // Reset positions
-    body->setCenterOfMassTransform(getTransform());
-    motion_state->setWorldTransform(getTransform());
+    body->setCenterOfMassTransform(getOrigin() * position);                             // ? We multiply by the position to include any positional offsets set by the user
+    motion_state->setWorldTransform(getOrigin() * position);                            // ? Same here
 
     // Wake up the body to ensure it processes the reset
     body->activate(true);
-}
-
-void GameObject::teleport(const btTransform& t) {
-    // Update the position
-    this->origin = t;                                                               // Note: This is currently set to `origin`. But `origin` should be the absolute initial start position
-                                                                                    //       for the object. Thus the assigning to origin is only temporary. Ideally, it would be a separate
-                                                                                    //       attribute controlling the objects position. This also makes the slider-logic easer to implement
-
-    // Reset the object's forces, and awake it
-    reset();
 }
 
 // Make a GameObject kinematic; - not affected by physics

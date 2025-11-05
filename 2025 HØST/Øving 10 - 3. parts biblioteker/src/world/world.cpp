@@ -41,40 +41,13 @@ World::World()
 }
 
 void World::reset() {
-    // Freeze the world
+    // Freeze the world, so objects don't move before dropping the ball
     freeze();
 
     // Reset all entities
     for (auto& entity : entityList) {
         entity->reset();
     }
-}
-
-// TODO: Rename and redo this function to only reposition the ball, not drop it
-void World::dropBall(float x, float y, float z) {
-    btTransform t;
-
-    t.setIdentity();
-    t.setOrigin(btVector3(x, y, z));
-
-    falling_sphere.teleport(t);
-}
-
-void World::dropBall() {
-    // dropBall(0.9f, 3.0f, 0.0f);
-    // | TEMPORARY: Ball positioning code. Will be implemented separatly in the function above marked with "TODO"
-    btTransform t;
-
-    t.setIdentity();
-    // // t.setOrigin(btVector3(x, y, z));
-    t.setOrigin(btVector3(0.9f, 3.0f, 0.0f));
-
-    falling_sphere.teleport(t);
-    // | ======== |
-
-    // Unfreeze the world
-    unfreeze();
-
 }
 
 // Makes all dynamic objects kinematic, essentially freezing the world

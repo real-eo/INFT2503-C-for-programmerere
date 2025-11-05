@@ -14,6 +14,7 @@ private:
 
 public:
     Renderer(World& world);
+
     static void setup_opengl();
     void render_frame(const glm::vec3& camera, std::chrono::system_clock::time_point& last_time);
 };

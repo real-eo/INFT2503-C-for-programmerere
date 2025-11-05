@@ -2,6 +2,7 @@
 
 #include <memory>
 #include <vector>
+#include <array>
 
 #include <btBulletDynamicsCommon.h>
 
@@ -9,8 +10,13 @@
 class GameObject {
 private:
     btTransform origin;
+    btTransform position = btTransform::getIdentity();
+    // TODO: Figure out if the reference to m_origin in getPositionReferences() is immutable during the 
+    //     : lifetime of the GameObject instance. If so, store the reference directly as a member variable
+    
 protected:
     std::unique_ptr<btDefaultMotionState> motion_state;
+
 public:
     std::unique_ptr<btRigidBody> body;
 
@@ -19,21 +25,22 @@ public:
     virtual void draw() const = 0;
     
     // * Getters
-    btTransform getTransform() const { return this->origin; }
-
+    btTransform getOrigin() const { return this->origin; }
+    std::array<float*, 4U> getPositionPointers();
+    
     // * Setters
     void setOrigin(const btVector3& position) {
         this->origin.setIdentity();
         this->origin.setOrigin(position);
     }
     
+    // * Inlines
+    inline void updatePosition() { motion_state->setWorldTransform(origin * position); }
+    
     // * Functions
     void reset();
-    void teleport(const btTransform& t);    
-    
     void kinematic();
     void dynamic();
-    
 };
 
 

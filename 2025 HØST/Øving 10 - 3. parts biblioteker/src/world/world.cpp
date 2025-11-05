@@ -1,5 +1,5 @@
 #include "world/world.hpp"
-// #include "gameObjects/gameObjects.hpp"                                       # Included in world/world.hpp 
+// #include "gameObjects/gameObjects.hpp"                                       # Included in world/world.hpp
 
 
 World::World()
@@ -12,6 +12,7 @@ World::World()
     entityList.push_back(&ground);
     entityList.push_back(&ground_sphere);
     entityList.push_back(&falling_sphere);
+
     for (auto &cube : cubes)
         entityList.push_back(&cube);
 
@@ -40,26 +41,59 @@ World::World()
 }
 
 void World::reset() {
-    // Reset velocities
+    // Freeze the world
+    freeze();
+
+    // Reset all entities
     for (auto& entity : entityList) {
-        entity->body->setLinearVelocity(btVector3(0, 0, 0));
-        entity->body->setAngularVelocity(btVector3(0, 0, 0));
-    }
-    // Reset positions
-    for (auto& entity : entityList) {
-        entity->body->setCenterOfMassTransform(entity->getTransform());
+        entity->reset();
     }
 }
 
+// TODO: Rename and redo this function to only reposition the ball, not drop it
 void World::dropBall(float x, float y, float z) {
     btTransform t;
+
     t.setIdentity();
     t.setOrigin(btVector3(x, y, z));
-    falling_sphere.teleportTo(t);
+
+    falling_sphere.teleport(t);
 }
 
-// No-arg overload to keep main.cpp working
 void World::dropBall() {
-    dropBall(0.9f, 3.0f, 0.0f);
+    // dropBall(0.9f, 3.0f, 0.0f);
+    // | TEMPORARY: Ball positioning code. Will be implemented separatly in the function above marked with "TODO"
+    btTransform t;
+
+    t.setIdentity();
+    // // t.setOrigin(btVector3(x, y, z));
+    t.setOrigin(btVector3(0.9f, 3.0f, 0.0f));
+
+    falling_sphere.teleport(t);
+    // | ======== |
+
+    // Unfreeze the world
+    unfreeze();
+
+}
+
+// Makes all dynamic objects kinematic, essentially freezing the world
+void World::freeze() {
+    // TODO: Improvement can be done here by storing each entry in the entity list as a pair 
+    //     : of <GameObject*, bool>, where the boolean dictates wether or not the object should
+    //     : be treated as dynamic, and subsequently made kinematic when freezing the world
+
+    for (auto& entity : entityList) {
+        entity->kinematic();
+    }
+}
+
+// Makes all "frozen" dynamic objects dynamic again, essentially unfreezing the world 
+void World::unfreeze() {
+    // TODO: Same todo as stated in `World::freeze()`
+
+    for (auto& entity : entityList) {
+        entity->dynamic();
+    }
 }
 

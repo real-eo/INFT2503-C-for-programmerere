@@ -9,7 +9,7 @@ Gui::Gui(World& world, sf::RenderWindow& window) : world(world), window(window) 
 }
 
 Gui::~Gui() {
-    ImGui::SFML::Shutdown();                                                            // To follow RAII principles 
+    ImGui::SFML::Shutdown();                                                            // Handle shutdown here to follow RAII principles 
 }
 
 

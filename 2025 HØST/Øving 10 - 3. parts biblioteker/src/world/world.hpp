@@ -2,14 +2,11 @@
 
 #include "gameObjects/gameObjects.hpp"
 
-// #include <vector>                                                // Included in "gameObjects/gameObjects.hpp"
+// #include <vector>                                                                    // Included in "gameObjects/gameObjects.hpp"
 #include <functional>
 
-// #include <btBulletDynamicsCommon.h>                              // Included in "gameObjects/gameObjects.hpp"
+// #include <btBulletDynamicsCommon.h>                                                  // Included in "gameObjects/gameObjects.hpp"
 
-
-// // Forward declaration
-// // class GameObject;
 
 // Class for the physics world. Rendering is handled separately by Renderer class.
 class World {
@@ -18,6 +15,10 @@ private:
     btCollisionDispatcher dispatcher;
     btDbvtBroadphase broadphase;
     btSequentialImpulseConstraintSolver solver;
+
+    void freeze();
+    void unfreeze();
+    
 public:
     btDiscreteDynamicsWorld dynamics;
 
@@ -30,8 +31,8 @@ public:
     World();
 
     void reset();
-    void dropBall(float x, float y, float z);
-    void dropBall();
-
+    void dropBall(float x, float y, float z);                                           // TODO: Update this function to only reposition the ball
+    void dropBall();                                                                    
+    
     std::function<void()> draw;
 };

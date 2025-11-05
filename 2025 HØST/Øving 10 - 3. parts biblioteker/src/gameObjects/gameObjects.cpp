@@ -17,62 +17,131 @@ extern "C" {
     void glutSolidCube(GLdouble size);
 }
 
-// ---------- Ground ----------
+
+
+// * -------- GameObject --------
+void GameObject::reset() {
+    // Reset velocities
+    body->setLinearVelocity(btVector3(0, 0, 0));
+    body->setAngularVelocity(btVector3(0, 0, 0));
+
+    // Clear accumulated forces
+    body->clearForces();
+
+    // Reset positions
+    body->setCenterOfMassTransform(getTransform());
+    motion_state->setWorldTransform(getTransform());
+
+    // Wake up the body to ensure it processes the reset
+    body->activate(true);
+}
+
+void GameObject::teleport(const btTransform& t) {
+    // Update the position
+    this->origin = t;                                                               // Note: This is currently set to `origin`. But `origin` should be the absolute initial start position
+                                                                                    //       for the object. Thus the assigning to origin is only temporary. Ideally, it would be a separate
+                                                                                    //       attribute controlling the objects position. This also makes the slider-logic easer to implement
+
+    // Reset the object's forces, and awake it
+    reset();
+}
+
+// Make a GameObject kinematic; - not affected by physics
+void GameObject::kinematic() {
+    body->setCollisionFlags(
+        body->getCollisionFlags() | btCollisionObject::CF_KINEMATIC_OBJECT
+    );
+    
+    body->setActivationState(DISABLE_DEACTIVATION);
+}
+
+// Make a GameObject dynamic; - affected by physics
+void GameObject::dynamic() {
+    body->setCollisionFlags(
+        body->getCollisionFlags() & ~btCollisionObject::CF_KINEMATIC_OBJECT
+    );
+
+    body->forceActivationState(ACTIVE_TAG);
+}
+
+
+
+// * ---------- Ground ----------
 Ground::Ground()
 : shape(btVector3(0.0, 1.0, 0.0), 0.0) {
     motion_state = std::make_unique<btDefaultMotionState>();
+
     body = std::make_unique<btRigidBody>(0.0, motion_state.get(), &shape);
+
     body->setRollingFriction(0.1);
     body->setRestitution(0.8);
 }
 
 void Ground::draw() const {
     auto position = body->getCenterOfMassPosition();
+
     glBegin(GL_TRIANGLE_STRIP);
+
     glColor3f(0.0, 1.0, 0.0);
     glNormal3f(0.0, 1.0, 0.0);
+
     glVertex3f(position.x() - 5.0, position.y(), position.z() + 5.0);
     glVertex3f(position.x() - 5.0, position.y(), position.z() - 5.0);
     glVertex3f(position.x() + 5.0, position.y(), position.z() + 5.0);
     glVertex3f(position.x() + 5.0, position.y(), position.z() - 5.0);
+
     glEnd();
 }
 
-// ---------- Sphere ----------
+
+
+// * ---------- Sphere ----------
 Sphere::Sphere()
 : shape(btScalar(0.1)) {
     motion_state = std::make_unique<btDefaultMotionState>();
     body = std::make_unique<btRigidBody>(1.0, motion_state.get(), &shape);
 
     auto mass = 1.0 / body->getInvMass();
+
     btVector3 inertia;
+
     shape.calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
+    
     body->setRollingFriction(0.2);
     body->setRestitution(0.8);
 }
 
 void Sphere::draw() const {
     glPushMatrix();
+
     auto position = body->getCenterOfMassPosition();
     glTranslatef(position.x(), position.y(), position.z());
+
     glColor3f(0.0, 0.0, 1.0);
+
     auto quadric = gluNewQuadric();
     gluSphere(quadric, shape.getRadius(), 32, 32);
     gluDeleteQuadric(quadric);
+
     glPopMatrix();
 }
 
-// ---------- Cube ----------
+
+
+// * ---------- Cube ----------
 Cube::Cube()
 : shape({0.1, 0.1, 0.1}) {
     motion_state = std::make_unique<btDefaultMotionState>();
     body = std::make_unique<btRigidBody>(1.0, motion_state.get(), &shape);
 
     auto mass = 1.0 / body->getInvMass();
+
     btVector3 inertia;
+
     shape.calculateLocalInertia(mass, inertia);
     body->setMassProps(mass, inertia);
+
     body->setFriction(0.5);
     body->setRollingFriction(0.1);
     body->setRestitution(0.2);
@@ -80,13 +149,18 @@ Cube::Cube()
 
 void Cube::draw() const {
     glPushMatrix();
+    
     auto position = body->getCenterOfMassPosition();
     glTranslatef(position.x(), position.y(), position.z());
+    
     auto q = body->getOrientation();
     btVector3 axis = q.getAxis();
+
     if (!axis.fuzzyZero()) axis.normalize();
+
     glRotatef(q.getAngle() * 180.0 / M_PI, axis.x(), axis.y(), axis.z());
     glColor3f(1.0, 0.0, 0.0);
     glutSolidCube(0.2);
+
     glPopMatrix();
 }

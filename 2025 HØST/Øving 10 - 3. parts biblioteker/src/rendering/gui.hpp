@@ -23,7 +23,7 @@ public:
     Gui(World& world, sf::RenderWindow& window);
     ~Gui();
 
-    // Inline
+    // Inlines
     inline void process(const sf::Event& event) {   
         ImGui::SFML::ProcessEvent(window, event); 
     }

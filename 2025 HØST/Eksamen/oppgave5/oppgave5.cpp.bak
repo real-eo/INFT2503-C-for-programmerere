@@ -1,0 +1,242 @@
+#include <gtkmm.h>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <cmath>
+
+class CalculatorWindow : public Gtk::Window {
+private:
+    // UI
+    Gtk::Box vbox_{Gtk::ORIENTATION_VERTICAL};
+    Gtk::Entry display_;
+    Gtk::Grid grid_;
+
+    // Calculator state
+    double left_ = 0.0;
+    char op_ = 0;
+    bool hasLeft_ = false;                         // whether left_ holds a stored operand
+    bool lastWasResult_ = false;                  // whether last action produced a result
+
+    // Helpers
+    void add_button(const std::string& label, int col, int row, int width = 1, int height = 1) {
+        auto btn = Gtk::manage(new Gtk::Button(label));
+        // bind the label so callback receives it
+        btn->signal_clicked().connect(sigc::bind<std::string>(sigc::mem_fun(*this, &CalculatorWindow::on_button_clicked), label));
+        grid_.attach(*btn, col, row, width, height);
+    }
+
+    // Format double to string: remove trailing zeros, use reasonable precision
+    static std::string format_double(double v) {
+        // handle NaN/inf
+        if (std::isnan(v)) return "NaN";
+        if (std::isinf(v)) return (v > 0 ? "Inf" : "-Inf");
+
+        std::ostringstream oss;
+        // choose precision so results like pi/2 become 1.5708 similar to example
+        oss << std::setprecision(6) << std::noshowpoint << std::fixed << v;
+
+        std::string s = oss.str();
+        // remove trailing zeros and possible trailing decimal point
+        if (s.find('.') != std::string::npos) {
+            while (!s.empty() && s.back() == '0') s.pop_back();
+            if (!s.empty() && s.back() == '.') s.pop_back();
+            if (s.empty()) s = "0";
+        }
+        return s;
+    }
+
+    void on_button_clicked(const std::string& label) {
+        if (label == "C") {
+            on_clear();
+
+            return;
+        }
+
+        if (label == "+" || label == "-" || label == "*" || label == "/") {
+            // set operator: if we already had left and operator, compute first
+            double current = parse_display();
+
+            if (hasLeft_ && !lastWasResult_) {
+                // If user pressed operator successively, perform the previous operation
+                compute(current);
+                display_.set_text(format_double(left_));
+
+            } else {
+                left_ = current;
+            }
+
+            op_ = label[0];
+            hasLeft_ = true;
+            lastWasResult_ = false;
+            // display_.set_text("0");     // ready for next operand
+            display_.set_text("0");
+
+            return;
+        }
+
+        if (label == "=") {
+            if (!hasLeft_ || op_ == 0) {
+                // nothing to do
+                lastWasResult_ = true;
+
+                return;
+            }
+
+            double current = parse_display();
+            compute(current);
+
+            display_.set_text(format_double(left_));
+            
+            // reset operator so further = doesn't repeat unless new operator set
+            op_ = 0;
+            hasLeft_ = false;
+            lastWasResult_ = true;
+
+            return;
+        }
+
+        // digit or dot
+        if (lastWasResult_) {
+            // start new entry
+            display_.set_text("0");
+            lastWasResult_ = false;
+        }
+
+        std::string text = display_.get_text();
+
+        if (label == ".") {
+            if (text.find('.') == std::string::npos) {
+                text += ".";
+            }
+
+        } else {
+            // append digit; replace leading zero unless there's a decimal point
+            if (text == "0")
+                text = label;
+
+            else
+                text += label;
+        }
+
+        display_.set_text(text);
+    }
+
+    double parse_display() const {
+        try {
+            std::string t = display_.get_text();
+            
+            if (t.empty()) return 0.0;
+
+            return std::stod(t);
+            
+        } catch (...) {
+            return 0.0;
+        }
+    }
+
+    void compute(double right) {
+        switch (op_) {
+            case '+': left_ = left_ + right; break;
+            case '-': left_ = left_ - right; break;
+            case '*': left_ = left_ * right; break;
+            case '/':
+                if (right == 0.0) {
+                    // division by zero -> display error and reset state
+                    display_.set_text("Error: div0");
+                    left_ = 0.0;
+                    op_ = 0;
+                    hasLeft_ = false;
+                    lastWasResult_ = true;
+
+                    return;
+
+                } else {
+                    left_ = left_ / right;
+                }
+
+                break;
+            default:
+                break;
+        }
+    }
+
+    void on_clear() {
+        display_.set_text("0");
+        left_ = 0.0;
+        op_ = 0;
+        hasLeft_ = false;
+        lastWasResult_ = false;
+    }
+
+public:
+    CalculatorWindow() {
+        set_title("Simple GTKmm Calculator");
+        set_default_size(320, 240);
+
+        // Top-level layout
+        vbox_.set_spacing(6);
+        add(vbox_);
+
+        // Display
+        display_.set_editable(false);
+        display_.set_hexpand(true);
+        display_.set_margin_start(6);
+        display_.set_margin_end(6);
+        display_.set_margin_top(6);
+        display_.set_margin_bottom(6);
+        display_.set_text("0");
+        vbox_.pack_start(display_, Gtk::PackOptions::PACK_SHRINK);
+
+        // Grid for buttons
+        grid_.set_row_spacing(4);
+        grid_.set_column_spacing(4);
+        grid_.set_margin_start(6);
+        grid_.set_margin_end(6);
+        grid_.set_margin_top(6);
+        grid_.set_margin_bottom(6);
+        vbox_.pack_start(grid_);
+
+        // Buttons layout (rows x cols)
+        // Row/col layout:
+        // 7 8 9 /
+        // 4 5 6 *
+        // 1 2 3 -
+        // 0 . = +
+
+        // Clear button spans full width below
+        add_button("7", 0, 0);
+        add_button("8", 1, 0);
+        add_button("9", 2, 0);
+        add_button("/", 3, 0);
+
+        add_button("4", 0, 1);
+        add_button("5", 1, 1);
+        add_button("6", 2, 1);
+        add_button("*", 3, 1);
+
+        add_button("1", 0, 2);
+        add_button("2", 1, 2);
+        add_button("3", 2, 2);
+        add_button("-", 3, 2);
+
+        add_button("0", 0, 3);
+        add_button(".", 1, 3);
+        add_button("=", 2, 3);
+        add_button("+", 3, 3);
+
+        auto clear_btn = Gtk::manage(new Gtk::Button("C"));
+        clear_btn->signal_clicked().connect(sigc::mem_fun(*this, &CalculatorWindow::on_clear));
+        grid_.attach(*clear_btn, 0, 4, 4, 1);
+
+        show_all_children();
+    }
+
+    virtual ~CalculatorWindow() = default;
+};
+
+int main(int argc, char** argv)
+{
+    auto app = Gtk::Application::create(argc, argv, "org.example.simple_calculator");
+    CalculatorWindow window;
+    return app->run(window);
+}

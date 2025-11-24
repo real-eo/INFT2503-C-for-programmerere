@@ -1,0 +1,425 @@
+#include <gtkmm.h>
+#include <iostream>
+#include <sstream>
+#include <iomanip>
+#include <cmath>
+#include <string>
+#include <vector>
+#include <stack>
+#include <cctype>
+#include <stdexcept>
+
+
+// Tokenize expression, allowing unary minus (e.g., -3.5 or 2*-3)
+struct Token {
+    enum Type { Number, Op } type;
+    double value;
+    char op;
+
+    Token(double v) : type(Number), value(v), op(0) {}
+    Token(char c) : type(Op), value(0.0), op(c) {}
+};
+
+
+class CalculatorWindow : public Gtk::Window {
+private:
+    // UI
+    Gtk::Box vbox_{Gtk::ORIENTATION_VERTICAL};
+    Gtk::Entry display_;
+    Gtk::Grid grid_;
+
+    // State
+    bool lastWasResult_ = false;                                                        // whether last action produced a result
+    double lastResult_ = 0.0;                                                           // full-precision result stored after evaluation
+
+    // Helpers
+    void add_button(const std::string& label, int col, int row, int width = 1, int height = 1) {
+        auto btn = Gtk::manage(new Gtk::Button(label));
+
+        btn->signal_clicked().connect(sigc::bind<std::string>(sigc::mem_fun(*this, &CalculatorWindow::on_button_clicked), label));
+        
+        grid_.attach(*btn, col, row, width, height);
+    }
+
+    static std::string format_double(double v) {
+        if (std::isnan(v)) return "NaN";
+        if (std::isinf(v)) return (v > 0 ? "Inf" : "-Inf");
+
+        std::ostringstream oss;
+        oss << std::fixed << std::setprecision(6) << v;
+        std::string s = oss.str();
+
+        if (s.find('.') != std::string::npos) {
+            while (!s.empty() && s.back() == '0') s.pop_back();
+            if (!s.empty() && s.back() == '.') s.pop_back();
+            if (s.empty()) s = "0";
+        }
+
+        return s;
+    }
+
+
+    // Full precision string for continuing calculations without losing precision
+    static std::string full_precision_double(double v) {
+        std::ostringstream oss;
+        // digits10 is number of decimal digits that can be represented without change
+        // +1 is a small safety margin
+        oss << std::setprecision(std::numeric_limits<double>::digits10 + 1) << v;
+        
+        return oss.str();
+    }
+
+    // Helpers to inspect display content
+    static bool is_op_char(char c) {
+        return c == '+' || c == '-' || c == '*' || c == '/';
+    }
+
+    // Check whether the current last number (since last operator) already contains a dot
+    bool last_number_has_decimal(const std::string& s) const {
+        for (int i = static_cast<int>(s.size()) - 1; i >= 0; --i) {
+            char c = s[i];
+            
+            if (c == '.') return true;
+            if (is_op_char(c) || c == '(' || c == ')') return false;
+        }
+
+        return false;
+    }
+
+    std::vector<Token> tokenize(const std::string& expr) const {
+        std::vector<Token> tokens;
+        std::size_t i = 0;
+
+        while (i < expr.size()) {
+            char c = expr[i];
+            if (std::isspace(static_cast<unsigned char>(c))) { ++i; continue; }
+
+            if (std::isdigit(static_cast<unsigned char>(c)) || c == '.' ||
+               (c == '-' && (i == 0 || is_op_char(expr[i-1]) || expr[i-1]=='('))) {
+                // parse number (may start with '-')
+                std::size_t j = i;
+                if (expr[j] == '-') ++j;
+
+                bool seen_dot = false;
+
+                while (j < expr.size() && (std::isdigit(static_cast<unsigned char>(expr[j])) || expr[j] == '.')) {
+                    if (expr[j] == '.') {
+                        if (seen_dot) break;                                            // second dot stops number
+
+                        seen_dot = true;
+                    }
+                    ++j;
+                }
+
+                std::string numstr = expr.substr(i, j - i);
+                double val = 0.0;
+
+                try {
+                    val = std::stod(numstr);
+                } catch (...) {
+                    throw std::runtime_error("Invalid number: " + numstr);
+                }
+
+                tokens.emplace_back(val);
+                i = j;
+
+                continue;
+            }
+
+            if (is_op_char(c) || c == '(' || c == ')') {
+                tokens.emplace_back(c);
+                ++i;
+
+                continue;
+            }
+
+            // invalid character
+            throw std::runtime_error(std::string("Invalid character: ") + c);
+        }
+
+        return tokens;
+    }
+
+    int precedence(char op) const {
+        if (op == '+' || op == '-') return 1;
+        if (op == '*' || op == '/') return 2;
+        return 0;
+    }
+
+    // Shunting-yard -> RPN
+    std::vector<Token> to_rpn(const std::vector<Token>& tokens) const {
+        std::vector<Token> output;
+        std::stack<char> ops;
+
+        for (const auto& t : tokens) {
+            if (t.type == Token::Number) {
+                output.emplace_back(t);
+
+            } else {                                                                    // operator or parentheses
+                char c = t.op;
+
+                if (is_op_char(c)) {
+                    while (!ops.empty() && is_op_char(ops.top()) &&
+                           precedence(ops.top()) >= precedence(c)) {
+
+                        output.emplace_back(ops.top());
+                        ops.pop();
+                    }
+
+                    ops.push(c);
+                
+                } else if (c == '(') {
+                    ops.push(c);
+                
+                } else if (c == ')') {
+                    bool found = false;
+                
+                    while (!ops.empty()) {
+                        char top = ops.top(); ops.pop();
+                
+                        if (top == '(') { found = true; break; }
+                
+                        output.emplace_back(top);
+                    }
+                
+                    if (!found) throw std::runtime_error("Mismatched parentheses");
+                }
+            }
+        }
+        while (!ops.empty()) {
+            char top = ops.top(); ops.pop();
+            
+            if (top == '(' || top == ')') throw std::runtime_error("Mismatched parentheses");
+
+            output.emplace_back(top);
+        }
+        
+        return output;
+    }
+
+    double eval_rpn(const std::vector<Token>& rpn) const {
+        std::stack<double> st;
+
+        for (const auto& t : rpn) {
+            if (t.type == Token::Number) {
+                st.push(t.value);
+            
+            } else {
+                if (st.size() < 2) throw std::runtime_error("Invalid expression");
+            
+                double b = st.top(); st.pop();
+                double a = st.top(); st.pop();
+                double res = 0.0;
+            
+                switch (t.op) {
+                    case '+': res = a + b; break;
+                    case '-': res = a - b; break;
+                    case '*': res = a * b; break;
+                    case '/':
+                        if (b == 0.0) throw std::runtime_error("Division by zero");
+                        
+                        res = a / b; 
+                        
+                        break;
+                    default: throw std::runtime_error(std::string("Unknown op: ") + t.op);
+                }
+            
+                st.push(res);
+            }
+        }
+
+        if (st.size() != 1) throw std::runtime_error("Invalid expression");
+
+        return st.top();
+    }
+
+    // Evaluate expression string
+    double evaluate_expression(const std::string& expr) const {
+        auto tokens = tokenize(expr);
+        auto rpn = to_rpn(tokens);
+
+        return eval_rpn(rpn);
+    }
+
+    void on_button_clicked(const std::string& label) {
+        if (label == "C") { on_clear(); return; }
+
+        std::string text = display_.get_text();
+
+        // If last action produced a result and user starts typing a digit or dot -> start new expression
+        if (lastWasResult_) {
+            if (label != "+" && label != "-" && label != "*" && label != "/" && label != "=") {
+                text = "0";
+                lastWasResult_ = false;
+            }
+        }
+
+        if (label == "+" || label == "-" || label == "*" || label == "/") {
+            // If the previous action was '=' we want to continue with the full precision result,
+            // not the rounded display text, to avoid losing precision on subsequent operations.
+            if (lastWasResult_) {
+                // replace displayed text with full-precision representation of lastResult_
+                text = full_precision_double(lastResult_);
+                lastWasResult_ = false;
+            }
+
+            // append operator behavior: treat display as an expression builder
+            // If the display currently shows error, reset
+            if (text.rfind("Error", 0) == 0) text = "0";
+
+            // Avoid consecutive operators (replace last operator if present)
+            if (!text.empty() && is_op_char(text.back())) {
+                // allow unary minus at start
+                if (text.size() == 1 && text[0] == '-' && label == "-") {
+                    // do nothing (already unary minus)
+
+                } else {
+                    text.back() = label[0];
+                    display_.set_text(text);
+                    lastWasResult_ = false;
+
+                    return;
+                }
+
+            } else if (text == "0" && label != "-") {
+                // don't allow starting expression with binary operator except unary minus
+                return;
+            }
+
+            text += label;
+            display_.set_text(text);
+            lastWasResult_ = false;
+
+            return;
+        }
+
+        if (label == "=") {
+            try {
+                std::string expr = display_.get_text();
+                double val = evaluate_expression(expr);
+                lastResult_ = val;                                                      // store full-precision result for later continuation
+                display_.set_text(format_double(val));
+
+            } catch (const std::exception& ex) {
+                display_.set_text(std::string("Error: ") + ex.what());
+            }
+
+            lastWasResult_ = true;
+
+            return;
+        }
+
+        // digit or dot
+        if (label == ".") {
+            // ensure current last number doesn't already have a dot
+            if (!last_number_has_decimal(text)) {
+                if (text.empty() || is_op_char(text.back())) {
+                    text += "0.";
+
+                } else {
+                    text += ".";
+                }
+            }
+
+        } else {
+            // digit: append, replacing a single leading "0"
+            if (text == "0") text = label;
+            else text += label;
+
+        }
+
+        display_.set_text(text);
+        lastWasResult_ = false;
+    }
+
+    double parse_display() const {
+        try {
+            std::string t = display_.get_text();
+
+            if (t.empty()) return 0.0;
+
+            return std::stod(t);
+
+        } catch (...) {
+            return 0.0;
+        }
+    }
+
+    void on_clear() {
+        display_.set_text("0");
+        lastWasResult_ = false;
+        lastResult_ = 0.0;
+    }
+
+public:
+    CalculatorWindow() {
+        set_title("GTKmm Calculator");
+        set_default_size(320, 240);
+
+        // Top-level layout
+        vbox_.set_spacing(6);
+        add(vbox_);
+
+        // Display
+        display_.set_editable(false);
+        display_.set_hexpand(true);
+        display_.set_margin_start(6);
+        display_.set_margin_end(6);
+        display_.set_margin_top(6);
+        display_.set_margin_bottom(6);
+        display_.set_text("0");
+        vbox_.pack_start(display_, Gtk::PackOptions::PACK_SHRINK);
+        
+        // Grid for buttons
+        grid_.set_row_spacing(4);
+        grid_.set_column_spacing(4);
+        grid_.set_margin_start(6);
+        grid_.set_margin_end(6);
+        grid_.set_margin_top(6);
+        grid_.set_margin_bottom(6);
+        vbox_.pack_start(grid_);
+
+        // Buttons layout (rows x cols)
+        // Row/col layout:
+        // 7 8 9 /
+        // 4 5 6 *
+        // 1 2 3 -
+        // 0 . = +
+
+        add_button("7", 0, 0);
+        add_button("8", 1, 0);
+        add_button("9", 2, 0);
+        add_button("/", 3, 0);
+
+        add_button("4", 0, 1);
+        add_button("5", 1, 1);
+        add_button("6", 2, 1);
+        add_button("*", 3, 1);
+
+        add_button("1", 0, 2);
+        add_button("2", 1, 2);
+        add_button("3", 2, 2);
+        add_button("-", 3, 2);
+
+        add_button("0", 0, 3);
+        add_button(".", 1, 3);
+        add_button("=", 2, 3);
+        add_button("+", 3, 3);
+
+        auto clear_btn = Gtk::manage(new Gtk::Button("C"));
+        clear_btn->signal_clicked().connect(sigc::mem_fun(*this, &CalculatorWindow::on_clear));
+        grid_.attach(*clear_btn, 0, 4, 4, 1);
+
+        show_all_children();
+    }
+
+    virtual ~CalculatorWindow() = default;
+};
+
+int main(int argc, char** argv) {
+    auto app = Gtk::Application::create(argc, argv);
+
+    CalculatorWindow window;
+
+    return app->run(window);
+}
